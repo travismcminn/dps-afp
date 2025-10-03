@@ -168,6 +168,10 @@
             <h4 style="margin: 0 0 10px;">Estimate your monthly payment</h4>
             <label for="equipmentSlider" style="display: block; margin-bottom: 6px;">Equipment Cost: <span id="equipmentValue">$50,000</span></label>
             <input type="range" id="equipmentSlider" min="5000" max="250000" step="1000" value="50000" />
+
+            <label for="residualInput" style="display:block; margin: 12px 0 6px;">Residual at end: <span id="residualValue">10%</span> <span id="residualDollar">($5,000)</span></label>
+            <input type="range" id="residualInput" min="0" max="50" step="1" value="10" />
+
             <div id="paymentResults" style="margin-top: 12px;"></div>
 
             <!-- Reviews -->
@@ -175,7 +179,7 @@
             <div id="afp-reviews" style="min-height: 120px;"></div>
           </div>
 
-          <p class="muted" style="margin-top: 16px;">* Estimates use standard lease factors for illustration only. Final terms depend on credit and time in business.</p>
+          <p class="muted" style="margin-top: 16px;">* Estimates use standard lease factors for illustration only. Residual shown is a balloon amount due at end of term and is an approximation. Final terms depend on credit and structure. </p>
         </div>
       </div>
     </div>
@@ -184,19 +188,24 @@
   <script>
     // Payment Estimator
     const slider = document.getElementById('equipmentSlider');
+    const residualInput = document.getElementById('residualInput');
     const valueLabel = document.getElementById('equipmentValue');
+    const residualValue = document.getElementById('residualValue');
+    const residualDollar = document.getElementById('residualDollar');
     const resultsBox = document.getElementById('paymentResults');
 
     function formatCurrency(val) {
       return `$${Number(val).toLocaleString()}`;
     }
 
-    function calculatePayments(equipmentCost) {
+    function calculatePayments(equipmentCost, residualPct) {
       const leaseFactors = { 24: 0.04703, 36: 0.03222, 48: 0.02512, 60: 0.02052 };
+      const residualAmount = Math.round(equipmentCost * (residualPct / 100));
+      const financedAmount = equipmentCost - residualAmount; // Balloon-style approximation
       let results = '';
       for (const term in leaseFactors) {
         const factor = leaseFactors[term];
-        const payment = equipmentCost * factor;
+        const payment = financedAmount * factor;
         results += `
           <div class="estimator-term-row">
             <strong>${term} months</strong>
@@ -204,16 +213,21 @@
           </div>
         `;
       }
-      return results;
+      return { results, residualAmount };
     }
 
     function updateCalculator() {
       const cost = parseInt(slider.value, 10);
+      const residPct = parseInt(residualInput.value, 10);
+      const { results, residualAmount } = calculatePayments(cost, residPct);
       valueLabel.textContent = formatCurrency(cost);
-      resultsBox.innerHTML = calculatePayments(cost);
+      residualValue.textContent = `${residPct}%`;
+      residualDollar.textContent = `(${formatCurrency(residualAmount)})`;
+      resultsBox.innerHTML = results;
     }
 
     slider.addEventListener('input', updateCalculator);
+    residualInput.addEventListener('input', updateCalculator);
     updateCalculator();
 
     // Reviews Carousel
@@ -247,3 +261,4 @@
   </script>
 </body>
 </html>
+
