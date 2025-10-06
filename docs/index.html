@@ -48,15 +48,6 @@
       margin-bottom: 24px;
       flex-wrap: wrap;
     }
-
-    .logo-badge {
-      background: #000;
-      padding: 6px 10px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
     .co-brand-bar img { max-height: 48px; height: auto; }
     .co-brand-bar .afp { filter: none; }
 
@@ -164,10 +155,14 @@
 
             <!-- Estimator -->
             <h4 style="margin: 0 0 10px;">Estimate your monthly payment</h4>
-            <label for="equipmentSlider" style="display: block; margin-bottom: 6px;">Equipment Cost: <span id="equipmentValue">$50,000</span></label>
-            <input type="range" id="equipmentSlider" min="5000" max="250000" step="1000" value="50000" />
+            <label for="equipmentSlider" style="display: block; margin-bottom: 6px;">
+              Equipment Cost: <span id="equipmentValue">$50,000</span>
+            </label>
+            <input type="range" id="equipmentSlider" min="5000" max="600000" step="1000" value="50000" />
 
-            <label for="residualInput" style="display:block; margin: 12px 0 6px;">Residual at end: <span id="residualValue">10%</span> <span id="residualDollar">($5,000)</span></label>
+            <label for="residualInput" style="display:block; margin: 12px 0 6px;">
+              Residual at end: <span id="residualValue">10%</span> <span id="residualDollar">($5,000)</span>
+            </label>
             <input type="range" id="residualInput" min="0" max="50" step="1" value="10" />
 
             <div id="paymentResults" style="margin-top: 12px;"></div>
@@ -177,7 +172,9 @@
             <div id="afp-reviews" style="min-height: 120px;"></div>
           </div>
 
-          <p class="muted" style="margin-top: 16px;">* Estimates use standard lease factors for illustration only. Residual shown is a balloon amount due at end of term and is an approximation. Final terms depend on credit and structure. </p>
+          <p class="muted" style="margin-top: 16px;">
+            * Estimates use standard lease factors for illustration only. Residual shown is a balloon amount due at end of term and is an approximation. Final terms depend on credit and structure.
+          </p>
         </div>
       </div>
     </div>
@@ -193,24 +190,37 @@
     const resultsBox = document.getElementById('paymentResults');
 
     function formatCurrency(val) {
-      return `$${Number(val).toLocaleString()}`;
+      return `$${Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    }
+    function formatCurrencyCents(val) {
+      return `$${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     function calculatePayments(equipmentCost, residualPct) {
-      const leaseFactors = { 24: 0.04703, 36: 0.03222, 48: 0.02512, 60: 0.02052 };
+      // Lease factors: $1 financed × factor = monthly payment
+      // 72 and 84 are inferred placeholders based on a reciprocal fit of 24/36/48/60
+      const leaseFactors = {
+        48: 0.02512,
+        60: 0.02052,
+        72: 0.01764, // placeholder derived estimate
+        84: 0.01554  // placeholder derived estimate
+      };
+
       const residualAmount = Math.round(equipmentCost * (residualPct / 100));
       const financedAmount = equipmentCost - residualAmount; // Balloon-style approximation
+
       let results = '';
-      for (const term in leaseFactors) {
+      [48, 60, 72, 84].forEach(term => {
         const factor = leaseFactors[term];
         const payment = financedAmount * factor;
         results += `
           <div class="estimator-term-row">
             <strong>${term} months</strong>
-            <span>${formatCurrency(payment.toFixed(2))} / month</span>
+            <span>${formatCurrencyCents(payment.toFixed(2))} / month</span>
           </div>
         `;
-      }
+      });
+
       return { results, residualAmount };
     }
 
@@ -259,5 +269,6 @@
   </script>
 </body>
 </html>
+
 
 
